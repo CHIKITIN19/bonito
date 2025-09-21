@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Gran ramo de flores amarillas</title>
+<style>
+  :root{
+    --stem: #2f7b2f;
+    --petal: #ffd54a;
+    --petal-dark: #ffca28;
+    --center: #f6c84c;
+  }
+  body{
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    min-height:100vh;
+    background:linear-gradient(180deg,#ffc0cb,#ffe4ec);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    overflow:hidden;
+  }
+  h1{
+    font-size:4vw;
+    text-align:center;
+    color:#5a2c2c;
+    max-width:90%;
+    margin:2vh 5vw;
+    line-height:1.4em;
+    white-space:pre-line;
+  }
+  .bouquet-container{
+    flex:1;
+    display:flex;
+    align-items:flex-end;
+    justify-content:center;
+    width:100%;
+    position:relative;
+  }
+  .bouquet{
+    transform-origin:50% 80%;
+    animation:sway 5s ease-in-out infinite;
+  }
+  @keyframes sway{
+    0%{transform:rotate(-3deg);}
+    50%{transform:rotate(3deg);}
+    100%{transform:rotate(-3deg);}
+  }
+  .petal{
+    transform-origin:center;
+    transform-box:fill-box;
+    opacity:0;
+    transform:scale(0.2);
+    transition:transform 600ms cubic-bezier(.16,.9,.36,1),opacity 600ms;
+  }
+  .flower.show .petal{opacity:1; transform:scale(1);}
+  .center{animation:pulse 2s ease-in-out infinite;}
+  @keyframes pulse{
+    0%{transform:scale(0.9);}
+    50%{transform:scale(1.1);}
+    100%{transform:scale(0.9);}
+  }
+  svg{
+    width:90vw;
+    max-width:700px;
+    height:auto;
+  }
+</style>
+</head>
+<body>
+
+<h1 id="message"></h1>
+<div class="bouquet-container" id="bouquetContainer"></div>
+
+<script>
+const messageEl = document.getElementById("message");
+const bouquetContainer = document.getElementById("bouquetContainer");
+
+// Mensaje
+const fullMessage = 
+`Para mi novia Luna, perdón por no darte lo que mereces, 
+trato de siempre dar lo mejor de mí, mi amor, 
+perdón por esta vez darte tus flores amarillas de esta manera :(`;
+
+// Animación tipo máquina de escribir
+let index = 0;
+function typeWriter(){
+  if(index < fullMessage.length){
+    messageEl.textContent += fullMessage.charAt(index);
+    index++;
+    setTimeout(typeWriter, 50);
+  }
+}
+window.addEventListener("load", typeWriter);
+
+// Función para crear ramo central saturado
+function createBouquet(){
+  const svgNS="http://www.w3.org/2000/svg";
+  const svg=document.createElementNS(svgNS,"svg");
+  svg.setAttribute("viewBox","0 0 400 400");
+
+  const g=document.createElementNS(svgNS,"g");
+  g.setAttribute("class","bouquet");
+  svg.appendChild(g);
+
+  const flowersGroup=document.createElementNS(svgNS,"g");
+  g.appendChild(flowersGroup);
+
+  function createFlower(fx,fy,scale=1){
+    const fg=document.createElementNS(svgNS,"g");
+    fg.setAttribute("class","flower");
+    fg.setAttribute("transform",`translate(${fx},${fy}) scale(${scale})`);
+
+    for(let i=0;i<6;i++){
+      const angle=(i/6)*360;
+      const petal=document.createElementNS(svgNS,"ellipse");
+      petal.setAttribute("cx",0);
+      petal.setAttribute("cy",-16);
+      petal.setAttribute("rx",10);
+      petal.setAttribute("ry",22);
+      petal.setAttribute("fill", i%2? "var(--petal-dark)" : "var(--petal)");
+      petal.setAttribute("class","petal");
+
+      const pg=document.createElementNS(svgNS,"g");
+      pg.setAttribute("transform",`rotate(${angle})`);
+      pg.appendChild(petal);
+      fg.appendChild(pg);
+    }
+
+    const center=document.createElementNS(svgNS,"circle");
+    center.setAttribute("r",8);
+    center.setAttribute("fill","var(--center)");
+    center.setAttribute("class","center");
+    fg.appendChild(center);
+
+    flowersGroup.appendChild(fg);
+    return fg;
+  }
+
+  // Generar muchas flores alrededor
+  const cx=200, cy=200;
+  const layers = 6;
+  for(let l=0;l<layers;l++){
+    const flowersInLayer = 8 + l*2;
+    const radius = 20 + l*25;
+    for(let i=0;i<flowersInLayer;i++){
+      const angle=(i/flowersInLayer)*2*Math.PI;
+      const fx=cx+Math.cos(angle)*radius;
+      const fy=cy+Math.sin(angle)*radius;
+      createFlower(fx,fy,0.9 + Math.random()*0.5);
+    }
+  }
+  createFlower(cx,cy,1.8); // flor central más grande
+
+  // Dibujar los tallos más largos y centrados
+  const stems=[
+    {x1:200,y1:400,x2:200,y2:250,w:12},
+    {x1:200,y1:400,x2:170,y2:270,w:9},
+    {x1:200,y1:400,x2:230,y2:270,w:9}
+  ];
+  stems.forEach(s=>{
+    const stem=document.createElementNS(svgNS,"line");
+    stem.setAttribute("x1",s.x1);
+    stem.setAttribute("y1",s.y1);
+    stem.setAttribute("x2",s.x2);
+    stem.setAttribute("y2",s.y2);
+    stem.setAttribute("stroke","var(--stem)");
+    stem.setAttribute("stroke-width",s.w);
+    stem.setAttribute("stroke-linecap","round");
+    g.appendChild(stem);
+  });
+
+  const allFlowers = flowersGroup.querySelectorAll(".flower");
+  allFlowers.forEach((f,idx)=>{
+    setTimeout(()=> f.classList.add("show"), idx*100);
+  });
+
+  bouquetContainer.appendChild(svg);
+}
+
+window.addEventListener("load",()=>{ createBouquet(); });
+</script>
+</body>
+</html>
